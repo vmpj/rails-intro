@@ -8,18 +8,29 @@ class MoviesController < ApplicationController
 
   def index
     @all_ratings=Movie.all_ratings
+
+    session[:params] ||= {}
+    session[:params][:ratings] ||= Hash[@all_ratings.collect { |v| [v, 1] }]
+    session[:params][:sortby] ||= 'title'
+
+    if params[:ratings].nil? || params[:sortby].nil?
+      params[:ratings] ||=session[:params][:ratings]
+      params[:sortby] ||=session[:params][:sortby]
+      session[:params] = params
+      flash.keep
+      redirect_to movies_path params
+    end
+
+    session[:params] = params
+
+    sort_by = params[:sortby]
+    @titleClass='hilite' if sort_by == 'title'
+    @releaseDateClass='hilite' if sort_by == 'release_date'
+
     @checked_ratings = params[:ratings]
-    logger.info "params[:ratings].has_key? #{@checked_ratings}"
-    logger.info params[:ratings].has_key?('G') unless @checked_ratings.nil?
-    # select all if none selected
-    @checked_ratings ||= Hash[@all_ratings.collect { |v| [v, 1] }]
-    logger.info "params[:ratings].has_key?2 #{@checked_ratings}"
-    @titleClass='hilite' if params[:sortby] == 'title'
-    @releaseDateClass='hilite' if params[:sortby] == 'release_date'
-
-
-    @movies = Movie.order(params[:sortby])
+    @movies = Movie.order(sort_by)
     @movies = @movies.where(rating: @checked_ratings.map {|k, v| k}) unless @checked_ratings.nil?
+
   end
 
   def new

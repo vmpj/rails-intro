@@ -7,9 +7,19 @@ class MoviesController < ApplicationController
   end
 
   def index
+    @all_ratings=Movie.all_ratings
+    @checked_ratings = params[:ratings]
+    logger.info "params[:ratings].has_key? #{@checked_ratings}"
+    logger.info params[:ratings].has_key?('G') unless @checked_ratings.nil?
+    # select all if none selected
+    @checked_ratings ||= Hash[@all_ratings.collect { |v| [v, 1] }]
+    logger.info "params[:ratings].has_key?2 #{@checked_ratings}"
     @titleClass='hilite' if params[:sortby] == 'title'
     @releaseDateClass='hilite' if params[:sortby] == 'release_date'
+
+
     @movies = Movie.order(params[:sortby])
+    @movies = @movies.where(rating: @checked_ratings.map {|k, v| k}) unless @checked_ratings.nil?
   end
 
   def new
